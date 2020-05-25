@@ -1,3 +1,4 @@
+#!/bin/bash
 input=$1
 test=$input
 if [ -d $test ]
