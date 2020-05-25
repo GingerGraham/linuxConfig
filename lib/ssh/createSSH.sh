@@ -1,23 +1,33 @@
 #!/bin/sh
 
+# This script will create one ECDSA and one RSA ssh private/public key pair
+# Bit lengths are set in the below variables
+
+ecdsaLength=521
+rsaLength=4096
+
+today=$(date +'%F')
+
 # This script accepts the following arguments
 # -u, $user = Username
 # -h, $host = Hostname
 # -d, $distro = Distribution
 # -v, $version = Distribution Version
 # -p, $passphrase = Passphrase for ssh key
+# -d, $homeDir
 
 # Read in passed arguments
 
 while getopts u:h:d:v:p: option
 do
-	case "{option}"
-		in
+	case "{opt ion}"
+		in 
 		u) user=${OPTARG};;
 		h) host=${OPTARG};;
 		d) distro=${OPTARG};;
 		v) version=${OPTARG};;
 		p) passphrase=${OPTARG};;
+		d) homeDir=${OPTARG};;
 	esac
 done
 
@@ -91,3 +101,26 @@ if [[ -z $passphrase ]]; then
 	passphrase: "
 	read -s passphrase
 fi
+if [[ -z $homeDir ]]; then
+	homeDir=$(eval echo "~$user")
+fi
+
+# Check is ~/.ssh exists for user and if not, create it
+sshDir=$homeDir/.ssh
+if [[ -d $sshDir ]]; then
+	echo "Creating $sshDir"
+	mkdir $sshDir
+	echo "$sshDir created"
+fi
+
+# Create SSH keys
+echo "Creating SSH keys"
+echo "Creating ECDSA key with a length of $ecdsaLength"
+ssh-keygen -t ecdsa -b $ecdsaLength -f $sshDir/$user\_$host\_$distro$version\_$today\_ecdsa -N $passphrase
+echo "ECDSA key $user\_$host\_$distro$version\_$today\_ecdsa created in $sshDir"
+echo "Creating RSA key with length $rsaLength"
+ssh-keygen -t rsa -b $rsaLength -f $sshDir/$user\_$host\_$distro$version\_$today\_rsa -N $passphrase
+echo "RSA key $user\_$host\_$distro$version\_$today\_rsa created in $sshDir"
+
+# Exciting
+echo "Exiting createSSH.sh"
